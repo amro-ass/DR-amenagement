@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detail Paie & Absences — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f4f8;
+  --bg2: #e8edf3;
+  --card: #ffffff;
+  --card2: #f7f9fc;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --text: #0f172a;
+  --text2: #334155;
+  --muted: #64748b;
+  --light: #94a3b8;
+  --blue: #2563eb;
+  --blue-soft: #eff6ff;
+  --blue-mid: #bfdbfe;
+  --red: #dc2626;
+  --red-soft: #fef2f2;
+  --red-mid: #fecaca;
+  --green: #16a34a;
+  --green-soft: #f0fdf4;
+  --green-mid: #bbf7d0;
+  --amber: #d97706;
+  --amber-soft: #fffbeb;
+  --amber-mid: #fde68a;
+  --purple: #7c3aed;
+  --purple-soft: #f5f3ff;
+  --purple-mid: #ddd6fe;
+  --cyan: #0891b2;
+  --cyan-soft: #ecfeff;
+  --cyan-mid: #a5f3fc;
+  --rose: #e11d48;
+  --rose-soft: #fff1f2;
+  --rose-mid: #fecdd3;
+  --teal: #0d9488;
+  --teal-soft: #f0fdfa;
+  --teal-mid: #99f6e4;
+  --indigo: #4f46e5;
+  --indigo-soft: #eef2ff;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 16px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;}
+
+body::before{
+  content:'';position:fixed;top:-200px;right:-200px;
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;bottom:-150px;left:-150px;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle, rgba(124,58,237,0.05) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+.wrapper{position:relative;z-index:1;max-width:1800px;margin:0 auto;padding:28px 28px;}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:16px 24px;margin-bottom:22px;
+  box-shadow:var(--shadow-sm);flex-wrap:wrap;gap:12px;
+}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.logo{
+  width:46px;height:46px;border-radius:13px;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;box-shadow:0 4px 14px rgba(37,99,235,0.3);flex-shrink:0;
+}
+.topbar h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.2rem,2.2vw,1.65rem);letter-spacing:-0.025em;color:var(--text);}
+.topbar h1 span{color:var(--blue);}
+.topbar-meta{font-size:0.73rem;color:var(--muted);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:0.71rem;font-weight:600;}
+.pill-live{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;}
+.pill-live::before{content:'●';animation:pulse 1.5s infinite;margin-right:2px;}
+.pill-offline{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:10px;font-size:0.78rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:inherit;text-decoration:none;white-space:nowrap;}
+.btn-sheet{background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;}
+.btn-sheet:hover{background:#dcfce7;transform:translateY(-1px);box-shadow:0 4px 12px rgba(22,163,74,0.15);}
+.btn-refresh{background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;}
+.btn-refresh:hover{background:#dbeafe;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,0.15);}
+.btn-refresh:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+.ico-spin{display:inline-block;}
+.spinning .ico-spin{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* FILTERS */
+.filters-bar{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:16px 20px;margin-bottom:22px;box-shadow:var(--shadow-sm);
+}
+.filters-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.filters-title{font-size:0.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
+.f-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:0.65rem;font-weight:700;transition:all .2s;}
+.f-badge-none{background:#f1f5f9;color:var(--muted);border:1px solid var(--border);}
+.f-badge-active{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;}
+.filters-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.filter-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:148px;}
+.filter-label{font-size:0.66rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em;}
+.filter-select{
+  background:var(--bg);border:1.5px solid var(--border);color:var(--text);
+  border-radius:9px;padding:8px 28px 8px 10px;font-size:0.8rem;font-family:inherit;
+  cursor:pointer;outline:none;transition:border-color .18s,box-shadow .18s;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;
+}
+.filter-select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
+.filter-select option{background:#fff;color:#0f172a;}
+.btn-reset{background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:9px;padding:8px 12px;font-size:0.77rem;font-family:inherit;font-weight:600;cursor:pointer;transition:all .18s;height:38px;}
+.btn-reset:hover{background:#fee2e2;}
+.f-count{font-size:0.71rem;color:var(--muted);height:38px;display:flex;align-items:center;white-space:nowrap;font-weight:500;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:14px;margin-bottom:22px;}
+@media(max-width:1400px){.kpi-grid{grid-template-columns:repeat(4,1fr);}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:18px 16px 16px;position:relative;overflow:hidden;
+  box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;cursor:default;
+}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;background:var(--kc);}
+.kpi-card::after{
+  content:'';position:absolute;top:0;right:0;
+  width:80px;height:80px;border-radius:0 16px 0 50%;
+  background:var(--kb);opacity:.7;
+}
+.kpi-icon-wrap{position:relative;z-index:1;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--kb);margin-bottom:13px;}
+.kpi-lbl{font-size:0.65rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.kpi-val{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;line-height:1.2;color:var(--kc);word-break:break-word;}
+.kpi-sub{font-size:0.67rem;color:var(--muted);margin-top:5px;line-height:1.3;}
+.kpi-tag{display:inline-flex;align-items:center;gap:3px;font-size:0.64rem;padding:2px 7px;border-radius:10px;margin-top:7px;font-weight:700;border:1px solid;}
+.tag-warn{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.tag-ok{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;}
+.tag-info{background:#fffbeb;color:#d97706;border-color:#fde68a;}
+.tag-neutral{background:#f8fafc;color:#64748b;border-color:#e2e8f0;}
+
+/* CHARTS */
+.charts-row{display:grid;gap:16px;margin-bottom:16px;}
+.row-2{grid-template-columns:2fr 1fr;}
+.row-21{grid-template-columns:3fr 2fr;}
+.row-3{grid-template-columns:repeat(3,1fr);}
+
+.chart-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:20px 22px;box-shadow:var(--shadow-sm);
+  display:flex;flex-direction:column;
+}
+.chart-card .canvas-wrap{
+  flex:1;position:relative;min-height:220px;
+}
+.chart-card .canvas-wrap canvas{
+  position:absolute;top:0;left:0;width:100%!important;height:100%!important;
+}
+.card-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;color:var(--text);}
+.card-sub{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+.card-chip{font-size:0.65rem;padding:3px 10px;border-radius:20px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;font-weight:700;white-space:nowrap;}
+
+/* TABLE */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);}
+.table-hd{padding:18px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start;}
+.tbl-scroll{overflow-x:auto;max-height:400px;overflow-y:auto;}
+.tbl-scroll::-webkit-scrollbar{width:4px;height:4px;}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+table{width:100%;border-collapse:collapse;}
+thead{position:sticky;top:0;z-index:2;}
+thead tr{background:#f8fafc;}
+th{padding:9px 13px;font-size:0.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);}
+td{padding:9px 13px;font-size:0.79rem;border-top:1px solid #f1f5f9;color:var(--text2);}
+tr:hover td{background:#fafbff;}
+.r-chip{padding:2px 8px;border-radius:9px;font-size:0.64rem;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;white-space:nowrap;}
+.s-chip{font-size:0.64rem;padding:2px 8px;border-radius:9px;font-weight:700;}
+
+/* PROGRESS */
+.prog-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.prog-lbl{font-size:0.71rem;color:var(--text2);min-width:168px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.prog-wrap{flex:1;background:#f1f5f9;border-radius:4px;height:7px;}
+.prog-bar{height:7px;border-radius:4px;transition:width .9s cubic-bezier(.4,0,.2,1);}
+.prog-val{font-size:0.69rem;color:var(--muted);min-width:36px;text-align:right;font-weight:600;}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:11px;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:0.69rem;color:var(--text2);}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* SECTION LABEL */
+.section-label{font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:8px 0 18px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--card);border:1px solid var(--border);padding:12px 18px;border-radius:12px;font-size:0.8rem;box-shadow:var(--shadow-lg);z-index:100;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:8px;pointer-events:none;color:var(--text);}
+.toast.show{transform:none;opacity:1;}
+
+/* FOOTER */
+footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.68rem;color:var(--muted);flex-wrap:wrap;gap:6px;}
+
+/* ANIMATIONS */
+.fin{animation:fup .4s ease forwards;opacity:0;}
+@keyframes fup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.d1{animation-delay:.04s}.d2{animation-delay:.08s}.d3{animation-delay:.12s}
+.d4{animation-delay:.16s}.d5{animation-delay:.2s}.d6{animation-delay:.24s}
+.d7{animation-delay:.28s}.d8{animation-delay:.32s}
+
+/* LOADING */
+.loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:16px;}
+.loading-spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;}
+.loading-text{font-size:0.9rem;color:var(--muted);font-weight:500;}
+.hidden{display:none !important;}
+
+@media(max-width:920px){.row-2,.row-21,.row-3{grid-template-columns:1fr;}}
+@media(max-width:580px){.filters-grid{flex-direction:column;}.filter-group{min-width:100%;}}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Chargement des données...</div>
+</div>
+
+<div class="wrapper">
+
+<!-- TOP BAR -->
+<div class="topbar fin">
+  <div class="topbar-left">
+    <div class="logo">💼</div>
+    <div>
+      <h1>Detail <span>Paie & Absences</span></h1>
+      <div class="topbar-meta" id="hMeta">Chargement...</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="pill pill-live" id="statusPill">Données actives</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:0.71rem;font-weight:600;background:#f0f4f8;color:#64748b;border:1px solid #e2e8f0;" title="Prochain refresh automatique">
+      🔁 <span id="countdownDisplay">30s</span>
+    </span>
+    <a href="https://docs.google.com/spreadsheets/d/1opMHElgJ63-sx0zfBhYQVHzJgeOKNRin/edit" target="_blank" class="btn btn-sheet">
+      <span>📊</span> Google Sheet
+    </a>
+    <button class="btn btn-refresh" id="btnRefresh" onclick="doRefresh()">
+      <span class="ico-spin">🔄</span> Actualiser
+    </button>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar fin d1">
+  <div class="filters-top">
+    <div class="filters-title">🔍 Filtres <span class="f-badge f-badge-none" id="aBadge">Aucun filtre</span></div>
+  </div>
+  <div class="filters-grid">
+    <div class="filter-group">
+      <div class="filter-label">📅 Mois</div>
+      <select class="filter-select" id="fMois" onchange="applyFilters()"><option value="">— Tous les mois —</option></select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">🔢 Matricule</div>
+      <select class="filter-select" id="fMat" onchange="applyFilters()"><option value="">— Tous —</option></select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">👤 Nom & Prenom</div>
+      <select class="filter-select" id="fNom" onchange="applyFilters()"><option value="">— Tous —</option></select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">💼 Fonction</div>
+      <select class="filter-select" id="fFn" onchange="applyFilters()"><option value="">— Toutes —</option></select>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:8px;">
+      <button class="btn-reset" onclick="resetFilters()">✕ Reset</button>
+      <div class="f-count" id="fCount">0 lignes</div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI SECTION -->
+<div class="section-label fin d1">📊 Indicateurs cles de performance</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card fin d1" style="--kc:#2563eb;--kb:#eff6ff">
+    <div class="kpi-icon-wrap">👤</div>
+    <div class="kpi-lbl">Employes Actifs</div>
+    <div class="kpi-val" id="kEmp">—</div>
+    <div class="kpi-sub" id="kEmpSub">—</div>
+  </div>
+  <div class="kpi-card fin d2" style="--kc:#16a34a;--kb:#f0fdf4">
+    <div class="kpi-icon-wrap">💰</div>
+    <div class="kpi-lbl">Masse Salariale</div>
+    <div class="kpi-val" id="kMasse">—</div>
+    <div class="kpi-sub">Net a payer cumule</div>
+  </div>
+  <div class="kpi-card fin d3" style="--kc:#7c3aed;--kb:#f5f3ff">
+    <div class="kpi-icon-wrap">📊</div>
+    <div class="kpi-lbl">Salaire Moyen</div>
+    <div class="kpi-val" id="kSalMoy">—</div>
+    <div class="kpi-sub">KMF / employe</div>
+  </div>
+  <div class="kpi-card fin d4" style="--kc:#dc2626;--kb:#fef2f2">
+    <div class="kpi-icon-wrap">📉</div>
+    <div class="kpi-lbl">Taux d'Absence</div>
+    <div class="kpi-val" id="kTaux">—</div>
+    <div class="kpi-sub" id="kTauxSub">—</div>
+    <div class="kpi-tag tag-warn" id="kTauxTag">—</div>
+  </div>
+  <div class="kpi-card fin d5" style="--kc:#0891b2;--kb:#ecfeff">
+    <div class="kpi-icon-wrap">⏱️</div>
+    <div class="kpi-lbl">Heures Totales</div>
+    <div class="kpi-val" id="kHrs">—</div>
+    <div class="kpi-sub">Heures travaillees</div>
+  </div>
+  <div class="kpi-card fin d6" style="--kc:#d97706;--kb:#fffbeb">
+    <div class="kpi-icon-wrap">🌙</div>
+    <div class="kpi-lbl">Primes Nuit</div>
+    <div class="kpi-val" id="kPrimeNuit">—</div>
+    <div class="kpi-sub">Cumul mensuel</div>
+  </div>
+  <div class="kpi-card fin d7" style="--kc:#e11d48;--kb:#fff1f2">
+    <div class="kpi-icon-wrap">⚡</div>
+    <div class="kpi-lbl">Heures Supp.</div>
+    <div class="kpi-val" id="kHS">—</div>
+    <div class="kpi-sub">125% + 175% + 200%</div>
+  </div>
+  <div class="kpi-card fin d8" style="--kc:#0d9488;--kb:#f0fdfa">
+    <div class="kpi-icon-wrap">🏛️</div>
+    <div class="kpi-lbl">Retenues CNSS/AMO</div>
+    <div class="kpi-val" id="kRetenues">—</div>
+    <div class="kpi-sub">Charges sociales</div>
+  </div>
+</div>
+
+<!-- CHARTS ROW 1: PAIE -->
+<div class="section-label fin d1">💰 Analyse de la Paie</div>
+<div class="charts-row row-3 fin d2">
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Structure du Net a Payer</div><div class="card-sub">Repartition des elements de paie</div></div><div class="card-chip">Paie</div></div>
+    <div class="canvas-wrap"><canvas id="cPaieStructure"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Heures Supplementaires</div><div class="card-sub">HT 125% vs 175% vs 200%</div></div><div class="card-chip">HS</div></div>
+    <div class="canvas-wrap"><canvas id="cHS"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Primes et Avantages</div><div class="card-sub">Prime nuit, responsabilite, fixe</div></div><div class="card-chip">Primes</div></div>
+    <div class="canvas-wrap"><canvas id="cPrimes"></canvas></div>
+  </div>
+</div>
+
+<!-- CHARTS ROW 2: ABSENCES -->
+<div class="section-label fin d1">📅 Analyse des Absences</div>
+<div class="charts-row row-2 fin d2">
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Repartition des Types d'Absence</div><div class="card-sub">P, S, C, F, A, R, M, Vide</div></div><div class="card-chip">Types</div></div>
+    <div class="canvas-wrap"><canvas id="cTypeAbs"></canvas></div>
+    <div class="legend" id="typeAbsLeg"></div>
+  </div>
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Taux d'Absence par Mois</div><div class="card-sub">Evolution mensuelle</div></div><div class="card-chip">Mensuel</div></div>
+    <div class="canvas-wrap"><canvas id="cAbsMensuel"></canvas></div>
+  </div>
+</div>
+
+<!-- CHARTS ROW 3: FONCTIONS -->
+<div class="section-label fin d1">🏢 Analyse par Fonction</div>
+<div class="charts-row row-21 fin d2">
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Masse Salariale par Fonction</div><div class="card-sub">Comparaison des fonctions</div></div><div class="card-chip">Fonctions</div></div>
+    <div class="canvas-wrap"><canvas id="cFnMasse"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Distribution des Salaires</div><div class="card-sub">Repartition par tranche (KMF)</div></div><div class="card-chip">RH</div></div>
+    <div class="canvas-wrap"><canvas id="cSalDistrib"></canvas></div>
+  </div>
+</div>
+
+<!-- TABLE + PROGRESS -->
+<div class="section-label fin d1">👥 Detail des Employes</div>
+<div class="charts-row row-2 fin d2" style="margin-bottom:16px;">
+  <div class="table-card">
+    <div class="table-hd">
+      <div><div class="card-title">Detail Paie & Absences</div><div class="card-sub" id="tblSub">0 enregistrements</div></div>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr>
+          <th>Mois</th><th>Mat.</th><th>Nom</th><th>Fonction</th>
+          <th>Salaire Net</th><th>Net a Payer</th><th>HS</th><th>Primes</th><th>Jours Payes</th>
+        </tr></thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="card-hd"><div><div class="card-title">Taux de Presence par Fonction</div><div class="card-sub">% jours travailles / total</div></div></div>
+    <div id="progBars"></div>
+  </div>
+</div>
+
+<!-- TREND -->
+<div class="section-label fin d1">📉 Tendances</div>
+<div class="chart-card fin d2" style="margin-bottom:20px;">
+  <div class="card-hd"><div><div class="card-title">Evolution de la Masse Salariale & Absences</div><div class="card-sub">Courbes comparatives 2026</div></div><div class="card-chip">Tendance</div></div>
+  <div class="canvas-wrap" style="min-height:180px;"><canvas id="cTrend"></canvas></div>
+</div>
+
+<footer style="margin-top:28px;padding:20px;border-top:2px solid var(--border);background:var(--card);border-radius:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div style="font-size:0.75rem;color:var(--muted);">
+    📊 Dashboard Detail Paie & Absences · Source: Google Sheets Direct · Feuille: BDD
+  </div>
+  <div style="font-size:0.75rem;color:var(--muted);display:flex;align-items:center;gap:8px;">
+    <span>👨‍💻 <strong style="color:var(--text);">Developer: Mohamed Ouchen</strong></span>
+    <span>|</span>
+    <a href="https://www.linkedin.com/in/med-ouchen" target="_blank" style="color:var(--blue);text-decoration:none;font-weight:600;">🔗 LinkedIn</a>
+    <span>|</span>
+    <span>Actualisé: <span id="lastUpd" style="color:var(--text);font-weight:600;">—</span></span>
+  </div>
+</footer>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="tIco">✅</span><span id="tMsg">OK</span></div>
+
+<script>
+// CONFIG & STATE — Connexion directe Google Sheets (sans SheetDB)
+const SHEET_ID   = '1opMHElgJ63-sx0zfBhYQVHzJgeOKNRin';
+const SHEET_NAME = 'BDD';
+const AUTO_REFRESH_INTERVAL = 30000; // 30 secondes
+
+let ALL_DATA = [];
+let FILTERED_DATA = [];
+const CHARTS = {};
+let autoRefreshTimer = null;
+let countdown = 30;
+let countdownTimer = null;
+
+const MOIS_MAP = {
+  '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Avr', '05': 'Mai', '06': 'Jun',
+  '07': 'Jul', '08': 'Aou', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'
+};
+
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = 'rgba(0,0,0,0.05)';
+Chart.defaults.font.family = 'Plus Jakarta Sans';
+Chart.defaults.maintainAspectRatio = false;
+
+// URL export CSV direct depuis Google Sheets (pas besoin d'API key)
+function getApiUrl() {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
+}
+
+// Parse CSV -> tableau d'objets JSON
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  function parseLine(line) {
+    const result = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) {
+        result.push(cur.trim()); cur = '';
+      } else { cur += c; }
+    }
+    result.push(cur.trim());
+    return result;
+  }
+  const headers = parseLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] || '').replace(/^"|"$/g, '').trim(); });
+    // Ignorer les lignes entierement vides
+    if (Object.values(obj).some(v => v !== '')) rows.push(obj);
+  }
+  return rows;
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  countdown = 30;
+  updateCountdownDisplay();
+  countdownTimer = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) countdown = 30;
+    updateCountdownDisplay();
+  }, 1000);
+  autoRefreshTimer = setInterval(() => {
+    countdown = 30;
+    loadData(true);
+  }, AUTO_REFRESH_INTERVAL);
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  if (countdownTimer) clearInterval(countdownTimer);
+  autoRefreshTimer = null;
+  countdownTimer = null;
+}
+
+function updateCountdownDisplay() {
+  const el = document.getElementById('countdownDisplay');
+  if (el) el.textContent = countdown + 's';
+}
+
+window.onload = () => {
+  loadData();
+  startAutoRefresh();
+};
+
+async function loadData(silent = false) {
+  if (!silent) showLoading(true);
+  try {
+    const url = getApiUrl();
+    console.log('[Google Sheets] Fetching CSV:', url);
+
+    const response = await fetch(url, { cache: 'no-store' });
+
+    console.log('[Google Sheets] Status:', response.status);
+
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status + ' — Verifier que le Sheet est public (Anyone with link)');
+    }
+
+    const csvText = await response.text();
+    const data = parseCSV(csvText);
+    console.log('[Google Sheets] Rows received:', data.length, '| Colonnes:', data[0] ? Object.keys(data[0]).join(', ') : 'N/A');
+
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('Feuille BDD vide ou introuvable. Verifier le nom de la feuille.');
+    }
+
+    // Detecter si les donnees ont change
+    const newSig = data.length + '_' + (data[0] ? JSON.stringify(Object.values(data[0])) : '');
+    const oldSig = ALL_DATA.length + '_' + (ALL_DATA[0] ? JSON.stringify(Object.values(ALL_DATA[0])) : '');
+    const hasChanged = newSig !== oldSig;
+
+    ALL_DATA = processData(data);
+
+    // Garder les filtres actifs lors du refresh silencieux
+    const vm   = document.getElementById('fMois').value;
+    const vmat = document.getElementById('fMat').value;
+    const vn   = document.getElementById('fNom').value;
+    const vf   = document.getElementById('fFn').value;
+
+    buildSelects();
+
+    // Restaurer les filtres
+    if (vm)  document.getElementById('fMois').value = vm;
+    if (vmat) document.getElementById('fMat').value = vmat;
+    if (vn)  document.getElementById('fNom').value = vn;
+    if (vf)  document.getElementById('fFn').value = vf;
+
+    applyFilters();
+    setLastUpd();
+
+    if (!silent) showLoading(false);
+    if (!silent) toast('✅', data.length + ' lignes chargees depuis Google Sheets !');
+    if (silent && hasChanged) toast('🔄', 'Donnees mises a jour depuis le Sheet !');
+
+    document.getElementById('statusPill').className = 'pill pill-live';
+    document.getElementById('statusPill').textContent = '✅ Google Sheets · ' + data.length + ' lignes';
+
+    // Cacher le panneau d'erreur si visible
+    const ep = document.getElementById('errorPanel');
+    if (ep) ep.style.display = 'none';
+
+  } catch (error) {
+    console.error('[Google Sheets] Erreur:', error);
+    if (!silent) showLoading(false);
+
+    const msg = error.message || 'Erreur inconnue';
+    toast('❌', 'Erreur: ' + msg.substring(0, 60));
+
+    document.getElementById('statusPill').className = 'pill pill-offline';
+    document.getElementById('statusPill').textContent = '❌ Hors ligne';
+
+    // Afficher panneau diagnostic
+    showErrorPanel(msg);
+
+    if (!silent) loadDemoData();
+  }
+}
+
+function showErrorPanel(msg) {
+  let ep = document.getElementById('errorPanel');
+  if (!ep) {
+    ep = document.createElement('div');
+    ep.id = 'errorPanel';
+    ep.style.cssText = 'background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:16px 20px;margin-bottom:18px;font-size:0.8rem;color:#dc2626;';
+    document.querySelector('.wrapper').insertBefore(ep, document.querySelector('.kpi-grid'));
+  }
+  ep.style.display = 'block';
+  ep.innerHTML = `
+    <strong>⚠️ Impossible de charger les donnees du Google Sheet</strong><br>
+    <span style="color:#64748b;font-size:0.75rem;">Erreur: ${msg}</span><br><br>
+    <strong style="color:#334155;">Verifications a faire :</strong>
+    <ul style="margin:8px 0 0 16px;color:#334155;font-size:0.75rem;line-height:1.8;">
+      <li>Le Google Sheet doit etre partage : <strong>Tout le monde avec le lien → Lecteur</strong></li>
+      <li>La feuille doit s'appeler exactement <code><strong>BDD</strong></code> (sensible a la casse)</li>
+      <li>Verifier la connexion internet</li>
+    </ul>
+    <div style="margin-top:10px;font-size:0.72rem;color:#94a3b8;">
+      Lien teste: <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=BDD" target="_blank" style="color:#2563eb;">Tester le lien CSV direct</a>
+    </div>
+  `;
+}
+
+function showLoading(show) {
+  document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+}
+
+function loadDemoData() {
+  ALL_DATA = [
+    {
+      Mois: '2026-01', Matricule: '001', 'Nom & prenom': 'Ahmed Benali', Fonction: 'Technicien',
+      'Salaire Net': 5000, 'Taux horaire': 25, 'CNSS Salarié': 250, 'Amo Salarié': 100, 'IR': 300,
+      'Autre retenue': 0, 'HT 125%': 10, 'HT 175%': 5, 'HT 200%': 0,
+      'Prime nuit': 200, 'Prime responsabilité': 150, 'Prime Fixe': 100,
+      'Net à Payer': 4800, 'Nbre eures': 208,
+      'P': 20, 'S': 2, 'C': 0, 'F': 1, 'A': 0, 'R': 0, 'M': 0, 'Vide': 0,
+      'Total ABS': 2, 'JRS à Payer': 26, 'NBR HRS': 208
+    }
+  ];
+  FILTERED_DATA = [...ALL_DATA];
+  buildSelects();
+  applyFilters();
+}
+
+function processData(rawData) {
+  return rawData.map(row => {
+    const processed = {};
+    Object.keys(row).forEach(key => {
+      const cleanKey = key.trim().replace(/\s+/g, ' ');
+      processed[cleanKey] = row[key];
+    });
+
+    const numericFields = [
+      'Salaire Net', 'Taux horaire', 'CNSS Salarié', 'Amo Salarié', 'IR', 'Autre retenue',
+      'HT 125%', 'HT 175%', 'HT 200%', 'Prime nuit', 'Prime responsabilité', 'Prime Fixe',
+      'Net à Payer', 'Nbre eures', 'P', 'S', 'C', 'F', 'A', 'R', 'M', 'Vide',
+      'Total ABS', 'JRS à Payer', 'NBR HRS'
+    ];
+
+    numericFields.forEach(field => {
+      // CSV Google Sheets peut envoyer des nombres en format francais: "3 958,12" ou "4 500,00"
+      // ou avec des espaces insecables, virgules decimales, etc.
+      let raw = String(processed[field] || '');
+      // Supprimer espaces (normaux + insecables), apostrophes, guillemets
+      raw = raw.replace(/[\s\u00a0\u202f']/g, '');
+      // Remplacer virgule decimale par point
+      raw = raw.replace(',', '.');
+      processed[field] = parseFloat(raw) || 0;
+    });
+
+    processed.totalPrimes = processed['Prime nuit'] + processed['Prime responsabilité'] + processed['Prime Fixe'];
+    processed.totalHS = processed['HT 125%'] + processed['HT 175%'] + processed['HT 200%'];
+    processed.totalRetenues = processed['CNSS Salarié'] + processed['Amo Salarié'] + processed['IR'] + processed['Autre retenue'];
+    processed.totalPresence = processed['P'] + processed['S'] + processed['C'] + processed['F'];
+    // totalJours = tous les jours enregistrés (hors Vide = non renseignés)
+    processed.totalJours = processed['P'] + processed['S'] + processed['C'] + processed['F'] + processed['A'] + processed['R'] + processed['M'];
+    // tauxAbsence = absences réelles / jours totaux
+    processed.tauxAbsence = processed.totalJours > 0 ? (processed['Total ABS'] / processed.totalJours * 100) : 0;
+
+    return processed;
+  });
+}
+
+function buildSelects() {
+  const mois = [...new Set(ALL_DATA.map(r => r.Mois))].sort();
+  const mats = [...new Set(ALL_DATA.map(r => r.Matricule))].sort();
+  const noms = [...new Set(ALL_DATA.map(r => r['Nom & prenom']))].sort();
+  const fns = [...new Set(ALL_DATA.map(r => r.Fonction))].sort();
+
+  fillSelect('fMois', mois, m => ({v: m, t: formatMois(m)}));
+  fillSelect('fMat', mats, m => ({v: m, t: m}));
+  fillSelect('fNom', noms, n => ({v: n, t: n}));
+  fillSelect('fFn', fns, f => ({v: f, t: f}));
+}
+
+function fillSelect(id, values, formatter) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">— Tous —</option>';
+  values.forEach(v => {
+    const opt = formatter(v);
+    sel.innerHTML += `<option value="${opt.v}">${opt.t}</option>`;
+  });
+}
+
+function formatMois(moisStr) {
+  if (!moisStr) return '';
+  const parts = moisStr.split('-');
+  if (parts.length >= 2) {
+    const mois = MOIS_MAP[parts[1]] || parts[1];
+    return `${mois} ${parts[0]}`;
+  }
+  return moisStr;
+}
+
+function applyFilters() {
+  const vm = document.getElementById('fMois').value;
+  const vmat = document.getElementById('fMat').value;
+  const vn = document.getElementById('fNom').value;
+  const vf = document.getElementById('fFn').value;
+
+  FILTERED_DATA = ALL_DATA.filter(r => 
+    (!vm || r.Mois === vm) &&
+    (!vmat || r.Matricule === vmat) &&
+    (!vn || r['Nom & prenom'] === vn) &&
+    (!vf || r.Fonction === vf)
+  );
+
+  const na = [vm, vmat, vn, vf].filter(Boolean).length;
+  const b = document.getElementById('aBadge');
+  if (na === 0) {
+    b.textContent = 'Aucun filtre';
+    b.className = 'f-badge f-badge-none';
+  } else {
+    b.textContent = na + ' filtre' + (na > 1 ? 's' : '') + ' actif' + (na > 1 ? 's' : '');
+    b.className = 'f-badge f-badge-active';
+  }
+
+  document.getElementById('fCount').textContent = FILTERED_DATA.length.toLocaleString('fr') + ' ligne' + (FILTERED_DATA.length > 1 ? 's' : '');
+
+  render();
+}
+
+function resetFilters() {
+  ['fMois', 'fMat', 'fNom', 'fFn'].forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+function render() {
+  renderKPIs();
+  renderPaieCharts();
+  renderAbsenceCharts();
+  renderFnCharts();
+  renderTable();
+  renderProgress();
+  renderTrend();
+}
+
+function renderKPIs() {
+  const empSet = new Set(FILTERED_DATA.map(r => r.Matricule));
+  const fnSet = new Set(FILTERED_DATA.map(r => r.Fonction));
+
+  const totalMasse = FILTERED_DATA.reduce((s, r) => s + r['Net à Payer'], 0);
+  // Salaire moyen = moyenne par ligne (par mois-employé), plus représentatif
+  const salMoy = FILTERED_DATA.length ? totalMasse / FILTERED_DATA.length : 0;
+  const totalHrs = FILTERED_DATA.reduce((s, r) => s + r['Nbre eures'], 0);
+  const totalPrimeNuit = FILTERED_DATA.reduce((s, r) => s + r['Prime nuit'], 0);
+  const totalHS = FILTERED_DATA.reduce((s, r) => s + r.totalHS, 0);
+  const totalRetenues = FILTERED_DATA.reduce((s, r) => s + r.totalRetenues, 0);
+
+  // Taux absence global = total jours absents / total jours théoriques
+  const totalAbsJours = FILTERED_DATA.reduce((s, r) => s + r['Total ABS'], 0);
+  const totalJoursTheo = FILTERED_DATA.reduce((s, r) => s + (r.totalJours || 26), 0);
+  const tauxAbsMoy = totalJoursTheo > 0 ? (totalAbsJours / totalJoursTheo * 100) : 0;
+
+  setText('kEmp', empSet.size);
+  setText('kEmpSub', fnSet.size + ' fonction' + (fnSet.size > 1 ? 's' : ''));
+  setText('kMasse', formatMontant(totalMasse));
+  setText('kSalMoy', salMoy.toLocaleString('fr', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  setText('kTaux', tauxAbsMoy.toFixed(1) + '%');
+  setText('kTauxSub', 'Moyenne sur la periode');
+
+  const tt = document.getElementById('kTauxTag');
+  if (tauxAbsMoy > 15) {
+    tt.className = 'kpi-tag tag-warn';
+    tt.textContent = '↑ Critique';
+  } else if (tauxAbsMoy > 8) {
+    tt.className = 'kpi-tag tag-warn';
+    tt.textContent = '↑ A surveiller';
+  } else {
+    tt.className = 'kpi-tag tag-ok';
+    tt.textContent = '✓ Normal';
+  }
+
+  setText('kHrs', totalHrs.toLocaleString('fr'));
+  setText('kPrimeNuit', formatMontant(totalPrimeNuit));
+  setText('kHS', totalHS.toFixed(0) + ' h');
+  setText('kRetenues', formatMontant(totalRetenues));
+
+  setText('hMeta', empSet.size + ' employe' + (empSet.size > 1 ? 's' : '') + ' · ' + fnSet.size + ' fonction' + (fnSet.size > 1 ? 's' : ''));
+}
+
+function formatMontant(val) {
+  return val.toLocaleString('fr', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function setText(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+function destroyChart(id) {
+  if (CHARTS[id]) {
+    CHARTS[id].destroy();
+    delete CHARTS[id];
+  }
+}
+
+function renderPaieCharts() {
+  renderPaieStructure();
+  renderHS();
+  renderPrimes();
+}
+
+function renderPaieStructure() {
+  destroyChart('paie');
+
+  const totalNet = FILTERED_DATA.reduce((s, r) => s + r['Net à Payer'], 0);
+  const totalBrut = FILTERED_DATA.reduce((s, r) => s + r['Salaire Net'], 0);
+  const totalPrimes = FILTERED_DATA.reduce((s, r) => s + r.totalPrimes, 0);
+  const totalHS = FILTERED_DATA.reduce((s, r) => s + r.totalHS * (r['Taux horaire'] || 0), 0);
+  const totalRetenues = FILTERED_DATA.reduce((s, r) => s + r.totalRetenues, 0);
+
+  CHARTS['paie'] = new Chart(document.getElementById('cPaieStructure'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Salaire Base', 'Primes', 'Heures Supp.', 'Retenues'],
+      datasets: [{
+        data: [totalBrut, totalPrimes, totalHS, totalRetenues],
+        backgroundColor: ['#2563eb', '#7c3aed', '#0891b2', '#dc2626'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15 } },
+        tooltip: {
+          callbacks: {
+            label: c => `${c.label}: ${c.parsed.toLocaleString('fr')} KMF`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderHS() {
+  destroyChart('hs');
+
+  const ht125 = FILTERED_DATA.reduce((s, r) => s + r['HT 125%'], 0);
+  const ht175 = FILTERED_DATA.reduce((s, r) => s + r['HT 175%'], 0);
+  const ht200 = FILTERED_DATA.reduce((s, r) => s + r['HT 200%'], 0);
+
+  CHARTS['hs'] = new Chart(document.getElementById('cHS'), {
+    type: 'bar',
+    data: {
+      labels: ['HT 125%', 'HT 175%', 'HT 200%'],
+      datasets: [{
+        label: 'Heures',
+        data: [ht125, ht175, ht200],
+        backgroundColor: ['#2563ebcc', '#7c3aedcc', '#0891b2cc'],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: '#64748b' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderPrimes() {
+  destroyChart('primes');
+
+  const pn = FILTERED_DATA.reduce((s, r) => s + r['Prime nuit'], 0);
+  const pr = FILTERED_DATA.reduce((s, r) => s + r['Prime responsabilité'], 0);
+  const pf = FILTERED_DATA.reduce((s, r) => s + r['Prime Fixe'], 0);
+
+  CHARTS['primes'] = new Chart(document.getElementById('cPrimes'), {
+    type: 'bar',
+    data: {
+      labels: ['Prime Nuit', 'Prime Resp.', 'Prime Fixe'],
+      datasets: [{
+        label: 'Montant (KMF)',
+        data: [pn, pr, pf],
+        backgroundColor: ['#d97706cc', '#16a34acc', '#0d9488cc'],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: '#64748b' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderAbsenceCharts() {
+  renderTypeAbs();
+  renderAbsMensuel();
+}
+
+function renderTypeAbs() {
+  destroyChart('typeAbs');
+
+  const types = ['P', 'S', 'C', 'F', 'A', 'R', 'M', 'Vide'];
+  const labels = ['Presence', 'Sortie', 'Conge', 'Ferie', 'Absence', 'Repos', 'Maladie', 'Vide'];
+  const colors = ['#16a34a', '#2563eb', '#7c3aed', '#d97706', '#dc2626', '#0891b2', '#e11d48', '#94a3b8'];
+
+  const data = types.map(t => FILTERED_DATA.reduce((s, r) => s + r[t], 0));
+
+  CHARTS['typeAbs'] = new Chart(document.getElementById('cTypeAbs'), {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => `${c.label}: ${c.parsed} jours`
+          }
+        }
+      }
+    }
+  });
+
+  const leg = document.getElementById('typeAbsLeg');
+  leg.innerHTML = '';
+  labels.forEach((l, i) => {
+    if (data[i] > 0) {
+      leg.innerHTML += `<div class="leg-item"><div class="leg-dot" style="background:${colors[i]}"></div>${l} (${data[i]})</div>`;
+    }
+  });
+}
+
+function renderAbsMensuel() {
+  destroyChart('absMensuel');
+
+  const moisData = {};
+  FILTERED_DATA.forEach(r => {
+    if (!moisData[r.Mois]) moisData[r.Mois] = { abs: 0, total: 0 };
+    moisData[r.Mois].abs += r['Total ABS'];
+    // Total jours théoriques = presence + absences réelles
+    moisData[r.Mois].total += (r['P'] + r['S'] + r['C'] + r['F'] + r['A'] + r['R'] + r['M']) || 26;
+  });
+
+  const sortedMois = Object.keys(moisData).sort();
+  const taux = sortedMois.map(m => moisData[m].total > 0 ? (moisData[m].abs / moisData[m].total * 100) : 0);
+
+  CHARTS['absMensuel'] = new Chart(document.getElementById('cAbsMensuel'), {
+    type: 'line',
+    data: {
+      labels: sortedMois.map(formatMois),
+      datasets: [{
+        label: 'Taux absence (%)',
+        data: taux,
+        borderColor: '#dc2626',
+        backgroundColor: 'rgba(220,38,38,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => v.toFixed(0) + '%', color: '#64748b' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderFnCharts() {
+  renderFnMasse();
+  renderSalDistrib();
+}
+
+function renderFnMasse() {
+  destroyChart('fnMasse');
+
+  const fnData = {};
+  FILTERED_DATA.forEach(r => {
+    if (!fnData[r.Fonction]) fnData[r.Fonction] = 0;
+    fnData[r.Fonction] += r['Net à Payer'];
+  });
+
+  const sorted = Object.entries(fnData).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  CHARTS['fnMasse'] = new Chart(document.getElementById('cFnMasse'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(x => x[0]),
+      datasets: [{
+        label: 'Masse salariale (KMF)',
+        data: sorted.map(x => x[1]),
+        backgroundColor: '#2563ebcc',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b' } },
+        y: { ticks: { font: { size: 10 }, color: '#334155' }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderSalDistrib() {
+  destroyChart('salDistrib');
+
+  const sals = FILTERED_DATA.map(r => r['Salaire Net']);
+  const bins = [0, 3000, 4000, 5000, 6000, 8000, 10000, 99999];
+  const labels = ['<3k', '3-4k', '4-5k', '5-6k', '6-8k', '8-10k', '>10k'];
+  const counts = Array(labels.length).fill(0);
+
+  sals.forEach(s => {
+    for (let i = 0; i < bins.length - 1; i++) {
+      if (s >= bins[i] && s < bins[i+1]) {
+        counts[i]++;
+        break;
+      }
+    }
+  });
+
+  const colors = ['#2563eb', '#7c3aed', '#0891b2', '#16a34a', '#d97706', '#dc2626', '#e11d48'];
+
+  CHARTS['salDistrib'] = new Chart(document.getElementById('cSalDistrib'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Nb employes',
+        data: counts,
+        backgroundColor: colors.map(c => c + 'cc'),
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, color: '#64748b' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderTable() {
+  const body = document.getElementById('tblBody');
+  const MAX = 100;
+  const slice = FILTERED_DATA.slice(0, MAX);
+
+  document.getElementById('tblSub').textContent = FILTERED_DATA.length.toLocaleString('fr') + ' enreg.' + (FILTERED_DATA.length > MAX ? ' (' + MAX + ' affiches)' : '');
+
+  if (!slice.length) {
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:#94a3b8;">🔍 Aucun resultat pour ce filtre</td></tr>';
+    return;
+  }
+
+  body.innerHTML = slice.map((r, i) => {
+    const fn = (r.Fonction || '').replace('Responsable', 'Resp.').replace('Technicien', 'Tech.');
+    const totalHS = r.totalHS;
+    const totalPrimes = r.totalPrimes;
+
+    return `<tr>
+      <td style="color:#94a3b8;font-size:.72rem">${formatMois(r.Mois)}</td>
+      <td style="font-weight:700;color:#2563eb">${r.Matricule}</td>
+      <td style="font-weight:600;color:#0f172a">${r['Nom & prenom']}</td>
+      <td><span class="r-chip">${fn}</span></td>
+      <td style="font-weight:600">${r['Salaire Net'].toLocaleString('fr', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td style="color:#16a34a;font-weight:700">${r['Net à Payer'].toLocaleString('fr', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td style="color:#0891b2">${totalHS > 0 ? totalHS.toLocaleString('fr', {minimumFractionDigits:2, maximumFractionDigits:2}) + 'h' : '-'}</td>
+      <td style="color:#7c3aed">${totalPrimes > 0 ? totalPrimes.toLocaleString('fr', {minimumFractionDigits:2, maximumFractionDigits:2}) : '-'}</td>
+      <td style="color:#16a34a;font-weight:600">${r['JRS à Payer']} j</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderProgress() {
+  const div = document.getElementById('progBars');
+  const fnData = {};
+
+  FILTERED_DATA.forEach(r => {
+    if (!fnData[r.Fonction]) fnData[r.Fonction] = { present: 0, total: 0 };
+    // Présence = P (présent) + S (sortie autorisée) + C (congé) + F (férié)
+    fnData[r.Fonction].present += r['P'] + r['S'] + r['C'] + r['F'];
+    // Total = tous les jours réels enregistrés
+    fnData[r.Fonction].total += (r['P'] + r['S'] + r['C'] + r['F'] + r['A'] + r['R'] + r['M']) || 26;
+  });
+
+  const sorted = Object.entries(fnData)
+    .map(([f, d]) => ({ f, pct: d.total ? (d.present / d.total * 100) : 0 }))
+    .sort((a, b) => b.pct - a.pct);
+
+  if (!sorted.length) {
+    div.innerHTML = '<div style="color:#94a3b8;font-size:.8rem;padding:12px 0;">Aucune donnee</div>';
+    return;
+  }
+
+  div.innerHTML = sorted.map(({ f, pct }) => {
+    const c = pct >= 90 ? '#16a34a' : pct >= 75 ? '#2563eb' : '#dc2626';
+    const fn = f.replace('Responsable', 'Resp.').replace('Technicien', 'Tech.');
+    return `<div class="prog-row">
+      <div class="prog-lbl" title="${f}">${fn}</div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%;background:${c}"></div></div>
+      <div class="prog-val" style="color:${c}">${pct.toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrend() {
+  destroyChart('trend');
+
+  const moisData = {};
+  FILTERED_DATA.forEach(r => {
+    if (!moisData[r.Mois]) moisData[r.Mois] = { masse: 0, abs: 0, total: 0 };
+    moisData[r.Mois].masse += r['Net à Payer'];
+    moisData[r.Mois].abs += r['Total ABS'];
+    moisData[r.Mois].total += (r['P'] + r['S'] + r['C'] + r['F'] + r['A'] + r['R'] + r['M']) || 26;
+  });
+
+  const sortedMois = Object.keys(moisData).sort();
+  const masses = sortedMois.map(m => moisData[m].masse / 1000);
+  const tauxAbs = sortedMois.map(m => moisData[m].total > 0 ? (moisData[m].abs / moisData[m].total * 100) : 0);
+
+  CHARTS['trend'] = new Chart(document.getElementById('cTrend'), {
+    type: 'line',
+    data: {
+      labels: sortedMois.map(formatMois),
+      datasets: [
+        {
+          label: 'Masse salariale (kKMF)',
+          data: masses,
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,0.1)',
+          fill: true,
+          tension: 0.4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Taux absence (%)',
+          data: tauxAbs,
+          borderColor: '#dc2626',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          tension: 0.4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 10, padding: 12 } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          ticks: { color: '#2563eb' },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          ticks: { color: '#dc2626', callback: v => v.toFixed(0) + '%' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function doRefresh() {
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+
+  // Reinitialiser le countdown
+  countdown = 30;
+  updateCountdownDisplay();
+
+  loadData().then(() => {
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  });
+}
+
+function setLastUpd() {
+  document.getElementById('lastUpd').textContent = new Date().toLocaleString('fr-FR');
+}
+
+function toast(ico, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('tIco').textContent = ico;
+  document.getElementById('tMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
